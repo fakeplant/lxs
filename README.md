@@ -27,11 +27,15 @@ $ npm link
 
 ## Usage
 
-Basic usage with no arguments:
+Basic usage with no arguments (using .env variables):
 ```bash
 $ lxs sync
 ```
 
+Usage with arguments:
+```bash
+$ lxs sync --model=../<model_path.lxf> --fixtures=../<fixtures_dir> 
+```
 
 ## Development
 
