@@ -67,6 +67,7 @@ program
     const modelFileJson = JSON5.parse(modelFile)
 
     // Iterate through fixture files and store changes
+    let isModelChanged = false
     const modelFixtures = modelFileJson.fixtures
     for (const modelFixture of modelFixtures) {
       // Get Fixture file
@@ -99,9 +100,17 @@ program
       // Write changes to fixture file
       // Use 'fleece' to preserve JSON5 formatting
       if (isChanged) {
+        isModelChanged = true
         const file = fleece.patch(fixtureFile, fixtureFileJson)
         fs.writeFileSync(`${fixturesPath}/${fixturePath}.lxf`, file)
       }
+    }
+
+    // Backup message
+    if (isModelChanged) {
+      console.log("Fixtures updated.")
+    } else {
+      console.log("Fixtures already up-to-date.")
     }
   })
 

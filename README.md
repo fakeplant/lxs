@@ -9,7 +9,7 @@ Used to to backfill [Chromatik](https://chromatik.co/) model file (.lxm) changes
 $ npm install
 ```
 
-2. Rename `.env.example` to `.env` and fill in the required values.
+2. Optional: Rename `.env.example` to `.env` and fill in the required values.
 
 
 3. Build the project:
