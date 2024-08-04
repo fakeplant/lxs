@@ -131,3 +131,6 @@ dist
 
 # IDE
 .idea/
+
+# map
+*.js.map
