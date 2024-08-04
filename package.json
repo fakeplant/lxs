@@ -1,0 +1,30 @@
+{
+  "name": "lxs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chromatik fixture syncing",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx tsx src/index.ts",
+    "build": "npx pkgroll",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "lxs": "./dist/index.mjs"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "golden-fleece": "^1.0.9",
+    "json5": "^2.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.1.0",
+    "pkgroll": "^2.4.2",
+    "prettier": "^3.3.3",
+    "tsx": "^4.16.5",
+    "typescript": "^5.5.4"
+  }
+}
