@@ -1,5 +1,5 @@
-# LXS
-Used to to backfill [Chromatik](https://chromatik.co/) model file (.lxm) changes back to original fixture files (.lxf).
+# LXS (LX Sync)
+Used to to sync [Chromatik](https://chromatik.co/) model file (.lxm) parameter changes back to original fixture files (.lxf).
 
 ## Install
 
