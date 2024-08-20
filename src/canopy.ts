@@ -1,5 +1,5 @@
 export const formatCanopyMessage = (
-  method: "get" | "set",
+  method: "get" | "set" | "ota" | "reset",
   key: string,
   data: object
 ) => {
@@ -21,7 +21,7 @@ export const parseCanopyRid = (message: any): string | null => {
 
 export const parseCanopyMessage = (
   message: any
-): { success: boolean; data: object; error?: string } => {
+): { success: boolean; data: any; error?: string } => {
   try {
     return {
       success: message["result"],
@@ -85,4 +85,51 @@ export const isCanopyConfigMatch = (
     return true
   }
   return compare(data, config)
+}
+
+export const getDeviceChip = (info: any) => {
+  if (!info) {
+    return undefined
+  }
+
+  // newer versions of firmware make it easy
+  if (!!info.mcu) {
+    return info.mcu
+  }
+
+  // older versions of firmware make it hard
+  const board = info.board
+  const qwiic = info.capabilities.qwiic
+  const bluetooth = info.capabilities.bluetooth
+
+  if (board.includes("angio")) {
+    return qwiic ? "esp32-s3" : "esp32"
+  }
+
+  if (board.includes("moss")) {
+    return bluetooth ? "esp32-c3" : "esp8266"
+  }
+
+  return undefined
+}
+
+export const getOtaPath = (manifest: any, chip: string) => {
+  const builds = manifest["builds"]
+  if (!builds) {
+    return undefined
+  }
+
+  for (const build of builds) {
+    const chipFamily = build["chipFamily"]
+    if (chipFamily !== chip.toUpperCase()) {
+      continue
+    }
+    const path = build["path"]
+    if (!path) {
+      continue
+    }
+    return path
+  }
+
+  return undefined
 }

@@ -25,18 +25,23 @@ export const downloadFirmware = async (version?: string) => {
   await fs.mkdirSync(firmwarePath, { recursive: true })
 
   // Save latest version to json file
-  const latestVersion = await getTimberLatestVersion()
-  const latestJson: ApiTimberLatestData = { version: latestVersion } // hack use this type to avoid issues w/ API
-  fs.writeFileSync(`${firmwarePath}/latest.json`, JSON.stringify(latestJson))
-  console.info(`build:firmware — Latest saved to ${firmwarePath}/latest.json`)
+  // ???: We don't really need this for this script
+  // const latestVersion = await getTimberLatestVersion()
+  // const latestJson: ApiTimberLatestData = { version: latestVersion } // hack use this type to avoid issues w/ API
+  // fs.writeFileSync(`${firmwarePath}/latest.json`, JSON.stringify(latestJson))
+  // console.info(`Latest saved to ${firmwarePath}/latest.json`)
 
   // Save versions to json file
   // Add version limit to attempt to reduce build size
   const versions = await getTimberVersions()
   fs.writeFileSync(`${firmwarePath}/versions.json`, JSON.stringify(versions))
-  console.info(
-    `build:firmware — Versions saved to ${firmwarePath}/versions.json`
-  )
+  console.info(`Versions saved to ${firmwarePath}/versions.json`)
+
+  // Validate version
+  version = version?.startsWith("v") ? version : `v${version}`
+  if (version && !versions[version]) {
+    console.error(`Version ${version} not found in versions`)
+  }
 
   // Download files
   const [files] = await bucket.getFiles({ prefix: bucketBuildsPath })
@@ -49,21 +54,19 @@ export const downloadFirmware = async (version?: string) => {
       // Name of build path to compare to version map
       const buildPath = pathParts[0]
 
+      if (version && buildPath !== versions[version]) {
+        return
+      }
+
       if (Object.values(versions).includes(buildPath)) {
         const localFileDirPath = `${firmwarePath}/builds/${fileDirPath}`
-
-        // Filter version
-        if (version && fileDirPath !== versions[version]) {
-          return
-        }
-
         await fs.mkdirSync(localFileDirPath, { recursive: true })
         const dest = `${firmwarePath}/builds/${fullFilePath}`
         if (!fs.existsSync(dest)) {
           await file.download({
             destination: dest,
           })
-          console.info(`build:firmware — Downloaded ${fullFilePath}`)
+          console.info(`Downloaded ${fullFilePath}`)
         }
       }
     })

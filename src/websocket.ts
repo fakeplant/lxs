@@ -63,6 +63,24 @@ export default class WebSocketClient {
     })
   }
 
+  async sendBinary(data: number[]): Promise<string> {
+    if (!this.isConnected) {
+      throw new Error("WebSocket is not connected.")
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      this.socket.onmessage = (event: any) => {
+        resolve(event.data)
+      }
+
+      this.socket.onerror = (error) => {
+        reject("Error sending command: " + error)
+      }
+
+      this.socket.send(data)
+    })
+  }
+
   async executeSequentialCommands(commands: string[]): Promise<void> {
     for (const command of commands) {
       // console.log(`Sending command: ${command}`)

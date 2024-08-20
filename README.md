@@ -41,23 +41,25 @@ $ lxs sync --model=../<model_path.lxf> --fixtures=../<fixtures_dir>
 
 ## Development
 
-
-
-### Running the project
+Run npm link
 
 ```bash
-$ npx tsx src/index.ts <command>
+$ npm link
 ```
 
-### Building
-
-To build the project:
+Start watch to build after file changes
 
 ```bash
-$ npm run build
+$ npm run watch
 ```
 
-### Formatting
+Run commands...
+
+```bash
+$ lxs --help
+```
+
+## Formatting
 The code is formatted using [Prettier](https://prettier.io/). 
 
 Settings are found in the `.prettierrc.json` file.
