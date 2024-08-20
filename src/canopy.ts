@@ -79,7 +79,6 @@ export const isCanopyConfigMatch = (
           return false
         }
       } else if (data[key] !== config[key]) {
-        console.log(data[key], config[key])
         return false
       }
     }

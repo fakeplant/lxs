@@ -34,7 +34,14 @@ export default class WebSocketClient {
     return Promise.race([connectionPromise, timeoutPromise])
   }
 
-  async sendCommand(command: string): Promise<string> {
+  async disconnect(): Promise<void> {
+    if (this.isConnected) {
+      this.socket.close()
+    }
+    this.isConnected = false
+  }
+
+  async sendCommand(command: string, skipResponse?: boolean): Promise<string> {
     if (!this.isConnected) {
       throw new Error("WebSocket is not connected.")
     }
@@ -49,6 +56,10 @@ export default class WebSocketClient {
       }
 
       this.socket.send(command)
+
+      if (skipResponse) {
+        resolve("")
+      }
     })
   }
 

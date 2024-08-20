@@ -1,0 +1,17 @@
+{
+  "network": {
+    "hostname": "$hostname",
+    "ethernet": {
+      "ip": "$ip",
+      "subnet": "255.255.0.0",
+      "gateway": "10.128.0.1"
+    },
+    "wifi": {
+      "ssid": "",
+      "password": "",
+      "ip": "",
+      "subnet": "",
+      "gateway": ""
+    }
+  }
+}

@@ -82,3 +82,8 @@ export const ipLog = (
     console.log(`${ip} : ${message}`)
   }
 }
+
+export const ipLogClear = () => {
+  process.stdout.moveCursor(0, -1)
+  process.stdout.clearLine(0)
+}
