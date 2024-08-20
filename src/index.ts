@@ -22,6 +22,7 @@ import {
   parseCanopyMessage,
   parseCanopyRid,
 } from "./canopy"
+import { downloadFirmware } from "./firmware/download"
 
 // Define program
 const program = new Command()
@@ -151,6 +152,34 @@ program
     const configPath = options.config
 
     await validateControllersNetwork(ipsPath, configPath)
+
+    process.exit(1)
+  })
+
+// Create 'firmware' command
+program
+  .command("firmware")
+  .option("-v, --version <0.0.0>", "download a single version")
+  .description("Download controller firmware versions to computer.")
+  .action(async (options) => {
+    await downloadFirmware(options?.version)
+    console.log("Firmware downloaded.")
+    process.exit(1)
+  })
+
+// Create 'update' command
+program
+  .command("update")
+  .description("Update controller firmware.")
+  .requiredOption("-i, --ips <path>", "path to the ips json file")
+  .requiredOption("-c, --config <path>", "path to the config file")
+  .option("-k, --key <key>", "only validate config for single key")
+  .action(async (options) => {
+    const ipsPath = options.ips
+    const configPath = options.config
+    const keyFilter = options.key
+
+    await validateControllersConfig(ipsPath, configPath, keyFilter)
 
     process.exit(1)
   })
