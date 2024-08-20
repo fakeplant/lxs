@@ -6,11 +6,12 @@
   "main": "index.js",
   "scripts": {
     "start": "npx tsx src/index.ts",
+    "watch": "npx pkgroll --watch",
     "build": "npx pkgroll",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "lxs": "./dist/index.mjs"
+    "tendril": "./dist/index.mjs"
   },
   "author": "",
   "license": "MIT",
@@ -18,10 +19,12 @@
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "golden-fleece": "^1.0.9",
-    "json5": "^2.2.3"
+    "json5": "^2.2.3",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.1.0",
+    "@types/ws": "^8.5.12",
     "pkgroll": "^2.4.2",
     "prettier": "^3.3.3",
     "tsx": "^4.16.5",

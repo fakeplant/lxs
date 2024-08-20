@@ -1,5 +1,7 @@
 # LXS (LX Sync)
 Used to to sync [Chromatik](https://chromatik.co/) model file (.lxm) parameter changes back to original fixture files (.lxf).
+Also includes a bunch of helper functions for managing [Chroma.tech](https://chroma.tech) controllers with Chromatik projects.
+
 
 ## Install
 
