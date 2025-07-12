@@ -1,5 +1,7 @@
 import { Command } from "commander"
 import { ipLog, readFileSafe } from "../utils"
+import { loadProjectConfig } from "../project"
+import { promptIPSelection } from "../interactive"
 import JSON5 from "json5"
 import WebSocketClient from "../websocket"
 import {
@@ -10,15 +12,57 @@ import {
 } from "../canopy"
 
 export const createNetworkCommand = () => {
-  return new Command("network")
+  return new Command("network [project]")
     .description("Validate controllers are up-to-date with.")
-    .requiredOption("-i, --ips <path>", "path to the ips json file")
-    .requiredOption("-c, --config <path>", "path to the config file")
-    .action(async (options) => {
-      const ipsPath = options.ips
-      const configPath = options.config
+    .option("-i, --ips <path>", "path to the ips json file")
+    .option("-c, --config <path>", "path to the config file")
+    .action(async (project, options) => {
+      let ipsPath: string
+      let configPath: string
 
-      await validateControllersNetwork(ipsPath, configPath)
+      if (project) {
+        // Use project configuration
+        const projectConfig = loadProjectConfig(project)
+        if (!projectConfig) {
+          process.exit(1)
+        }
+
+        ipsPath = options.ips || projectConfig.ipsPath
+        configPath = options.config || projectConfig.networkPath
+
+        if (!ipsPath) {
+          console.error(`Project '${project}' does not have IPs generated. Run 'lxs ips ${project}' first.`)
+          process.exit(1)
+        }
+        if (!configPath) {
+          console.error(`Project '${project}' does not have a network config file`)
+          process.exit(1)
+        }
+
+        // Interactive IP selection for project mode
+        try {
+          const ipSelection = await promptIPSelection(ipsPath)
+          await validateControllersNetworkWithIPs(ipSelection.ips, configPath)
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : "Unknown error")
+          process.exit(1)
+        }
+      } else {
+        // Manual mode - require options
+        if (!options.ips) {
+          console.error("--ips is required when no project is specified")
+          process.exit(1)
+        }
+        if (!options.config) {
+          console.error("--config is required when no project is specified")
+          process.exit(1)
+        }
+        
+        ipsPath = options.ips
+        configPath = options.config
+
+        await validateControllersNetwork(ipsPath, configPath)
+      }
 
       process.exit(1)
     })
@@ -36,6 +80,13 @@ export const validateControllersNetwork = async (
   }
   const ips = JSON5.parse(ipsData)
 
+  await validateControllersNetworkWithIPs(ips, networkPath)
+}
+
+export const validateControllersNetworkWithIPs = async (
+  ips: string[],
+  networkPath: string
+) => {
   // Get config data
   const configData = readFileSafe(networkPath)
   if (!configData) {

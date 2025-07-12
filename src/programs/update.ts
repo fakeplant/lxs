@@ -1,5 +1,7 @@
 import { Command } from "commander"
 import { ipLog, readFileSafe } from "../utils"
+import { loadProjectConfig } from "../project"
+import { promptIPSelection } from "../interactive"
 import JSON5 from "json5"
 import fs from "node:fs"
 import path from "path"
@@ -13,15 +15,57 @@ import {
 } from "../canopy"
 
 export const createUpdateCommand = () => {
-  return new Command("update")
+  return new Command("update [project]")
     .description("Update controller firmware.")
-    .requiredOption("-i, --ips <path>", "path to the ips json file")
-    .requiredOption("-v, --version <0.0.0>", "download a single version")
-    .action(async (options) => {
-      const ipsPath = options.ips
-      const version = options.version
+    .option("-i, --ips <path>", "path to the ips json file")
+    .option("-v, --version <0.0.0>", "firmware version to update to")
+    .action(async (project, options) => {
+      let ipsPath: string
+      let version: string
 
-      await validateControllersFirmware(ipsPath, version)
+      if (project) {
+        // Use project configuration
+        const projectConfig = loadProjectConfig(project)
+        if (!projectConfig) {
+          process.exit(1)
+        }
+
+        ipsPath = options.ips || projectConfig.ipsPath
+        version = options.version
+
+        if (!ipsPath) {
+          console.error(`Project '${project}' does not have IPs generated. Run 'lxs ips ${project}' first.`)
+          process.exit(1)
+        }
+        if (!version) {
+          console.error("--version is required")
+          process.exit(1)
+        }
+
+        // Interactive IP selection for project mode
+        try {
+          const ipSelection = await promptIPSelection(ipsPath)
+          await validateControllersFirmwareWithIPs(ipSelection.ips, version)
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : "Unknown error")
+          process.exit(1)
+        }
+      } else {
+        // Manual mode - require options
+        if (!options.ips) {
+          console.error("--ips is required when no project is specified")
+          process.exit(1)
+        }
+        if (!options.version) {
+          console.error("--version is required")
+          process.exit(1)
+        }
+        
+        ipsPath = options.ips
+        version = options.version
+
+        await validateControllersFirmware(ipsPath, version)
+      }
 
       process.exit(1)
     })
@@ -39,6 +83,13 @@ export const validateControllersFirmware = async (
   }
   const ips = JSON5.parse(ipsData)
 
+  await validateControllersFirmwareWithIPs(ips, version)
+}
+
+export const validateControllersFirmwareWithIPs = async (
+  ips: string[],
+  version: string
+) => {
   // Validate each IP
   for (const ip of ips) {
     await validateControllerFirmware(ip, version)

@@ -9,11 +9,11 @@ import {
 import mdns, { Service } from "mdns"
 
 export const createRecoverCommand = () => {
-  return new Command("recover")
+  return new Command("recover [project]")
     .description(
       "Recover controller network settings after breaking firmware updates."
     )
-    .action(async (options) => {
+    .action(async (project, options) => {
       await recoverControllersNetwork()
 
       process.exit(1)

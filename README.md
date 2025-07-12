@@ -3,6 +3,17 @@ Used to to sync [Chromatik](https://chromatik.co/) model file (.lxm) parameter c
 Also includes a bunch of helper functions for managing [Chroma.tech](https://chroma.tech) controllers with Chromatik projects.
 
 
+## TE Usage
+
+### Update Existing Controllers
+
+1. Download the firmware versions we want to run
+`lxs firmware -v 0.12.10`
+
+2. 
+
+
+
 ## Install
 
 1. Install the dependencies:
@@ -65,3 +76,5 @@ The code is formatted using [Prettier](https://prettier.io/).
 Settings are found in the `.prettierrc.json` file.
 
 Setup automatic formatting in your editor by following the instructions [here](https://prettier.io/docs/en/editors.html)
+
+

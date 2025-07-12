@@ -4,19 +4,49 @@ import {
   readFileSafe,
   validatePath,
 } from "../utils"
+import { loadProjectConfig } from "../project"
 import JSON5 from "json5"
 import fleece from "golden-fleece"
 import fs from "node:fs"
 import path from "path"
 
 export const createSyncCommand = () => {
-  return new Command("sync")
+  return new Command("sync [project]")
     .description("Sync fixture with model.")
-    .requiredOption("-m, --model <path>", "path to the model file")
+    .option("-m, --model <path>", "path to the model file")
     .option("-f, --fixtures <path>", "path to the fixtures directory")
-    .action((options) => {
-      const modelPath = options.model
-      let fixturesPath = options.fixtures || findFixturesPath(modelPath)
+    .action((project, options) => {
+      let modelPath: string
+      let fixturesPath: string
+
+      if (project) {
+        // Use project configuration
+        const projectConfig = loadProjectConfig(project)
+        if (!projectConfig) {
+          process.exit(1)
+        }
+
+        modelPath = options.model || projectConfig.modelPath
+        fixturesPath = options.fixtures || projectConfig.fixturesPath
+
+        if (!modelPath) {
+          console.error(`Project '${project}' does not have a model path configured`)
+          process.exit(1)
+        }
+        if (!fixturesPath) {
+          console.error(`Project '${project}' does not have a fixtures path configured`)
+          process.exit(1)
+        }
+      } else {
+        // Manual mode - require options
+        if (!options.model) {
+          console.error("--model is required when no project is specified")
+          process.exit(1)
+        }
+        
+        modelPath = options.model
+        fixturesPath = options.fixtures || findFixturesPath(modelPath)
+      }
 
       if (
         !validatePath(modelPath, "file") ||
