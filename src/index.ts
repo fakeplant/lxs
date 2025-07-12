@@ -10,6 +10,10 @@ import { createFirmwareCommand } from "./programs/firmware"
 import { createUpdateCommand } from "./programs/update"
 import { createRecoverCommand } from "./programs/recover"
 
+// Env
+import dotenv from "dotenv"
+dotenv.config()
+
 // Define program
 const program = new Command()
 program

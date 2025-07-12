@@ -12,7 +12,9 @@ import {
 } from "../canopy"
 
 export const createNetworkCommand = () => {
-  return new Command("network [project]")
+  const command = new Command("network")
+  command
+    .argument("[project]", "optional project name")
     .description("Validate controllers are up-to-date with.")
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-c, --config <path>", "path to the config file")
@@ -66,6 +68,8 @@ export const createNetworkCommand = () => {
 
       process.exit(1)
     })
+  
+  return command
 }
 
 export const validateControllersNetwork = async (

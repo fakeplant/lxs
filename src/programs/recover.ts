@@ -1,5 +1,6 @@
 import { Command } from "commander"
 import { ipLog, readFileSafe } from "../utils"
+import { getTempDirectory } from "../project"
 import WebSocketClient from "../websocket"
 import {
   formatCanopyMessage,
@@ -7,9 +8,12 @@ import {
   parseCanopyRid,
 } from "../canopy"
 import mdns, { Service } from "mdns"
+import path from "path"
 
 export const createRecoverCommand = () => {
-  return new Command("recover [project]")
+  const command = new Command("recover")
+  command
+    .argument("[project]", "optional project name")
     .description(
       "Recover controller network settings after breaking firmware updates."
     )
@@ -18,6 +22,8 @@ export const createRecoverCommand = () => {
 
       process.exit(1)
     })
+  
+  return command
 }
 
 export const recoverControllersNetwork = async () => {
@@ -86,8 +92,8 @@ export const parseService = async (service: Service) => {
 
   // Get network file
   const uid = parsedInfoResp.data.uid
-  const networkDir = `temp/controllers/${uid}`
-  const networkPath = `${networkDir}/network.json`
+  const networkDir = path.join(getTempDirectory(), "controllers", uid)
+  const networkPath = path.join(networkDir, "network.json")
   const networkData = readFileSafe(networkPath)
   if (!networkData) {
     ipLog(ip, `Skipped`, { clear: true })

@@ -12,7 +12,9 @@ import {
 } from "../canopy"
 
 export const createConfigCommand = () => {
-  return new Command("config [project]")
+  const command = new Command("config")
+  command
+    .argument("[project]", "optional project name")
     .description("Validate controllers are up-to-date with.")
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-c, --config <path>", "path to the config file")
@@ -68,6 +70,8 @@ export const createConfigCommand = () => {
 
       process.exit(1)
     })
+  
+  return command
 }
 
 export const validateControllersConfig = async (

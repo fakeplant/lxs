@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import { ipLog, readFileSafe } from "../utils"
-import { loadProjectConfig } from "../project"
+import { loadProjectConfig, getTempDirectory } from "../project"
 import { promptIPSelection } from "../interactive"
 import JSON5 from "json5"
 import fs from "node:fs"
@@ -15,7 +15,9 @@ import {
 } from "../canopy"
 
 export const createUpdateCommand = () => {
-  return new Command("update [project]")
+  const command = new Command("update")
+  command
+    .argument("[project]", "optional project name")
     .description("Update controller firmware.")
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-v, --version <0.0.0>", "firmware version to update to")
@@ -69,6 +71,8 @@ export const createUpdateCommand = () => {
 
       process.exit(1)
     })
+  
+  return command
 }
 
 export const validateControllersFirmware = async (
@@ -152,11 +156,12 @@ export const validateControllerFirmware = async (
     ipLog(ip, `Network response error`, { clear: true, error: true })
     return
   }
-  fs.mkdirSync(`temp/controllers/${parsedInfoResp.data.uid}`, {
+  const controllersDir = path.join(getTempDirectory(), "controllers", parsedInfoResp.data.uid)
+  fs.mkdirSync(controllersDir, {
     recursive: true,
   })
   fs.writeFileSync(
-    `temp/controllers/${parsedInfoResp.data.uid}/network.json`,
+    path.join(controllersDir, "network.json"),
     JSON.stringify({ network: parsedNetworkResp.data }, null, 2)
   )
 
@@ -174,10 +179,10 @@ export const validateControllerFirmware = async (
   })
 
   // Check if valid version
-  const versionsPath = "temp/firmware/versions.json"
+  const versionsPath = path.join(getTempDirectory(), "firmware", "versions.json")
   const versionsFile = fs.readFileSync(versionsPath, "utf8")
   const versions = JSON.parse(versionsFile)
-  const firmwareDirPath = "temp/firmware/builds"
+  const firmwareDirPath = path.join(getTempDirectory(), "firmware", "builds")
   let buildPath
   try {
     buildPath = versions[version]

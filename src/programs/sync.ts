@@ -11,7 +11,9 @@ import fs from "node:fs"
 import path from "path"
 
 export const createSyncCommand = () => {
-  return new Command("sync [project]")
+  const command = new Command("sync")
+  command
+    .argument("[project]", "optional project name")
     .description("Sync fixture with model.")
     .option("-m, --model <path>", "path to the model file")
     .option("-f, --fixtures <path>", "path to the fixtures directory")
@@ -108,4 +110,6 @@ export const createSyncCommand = () => {
         console.log("Fixtures already up-to-date.")
       }
     })
+  
+  return command
 }

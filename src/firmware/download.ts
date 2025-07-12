@@ -1,8 +1,10 @@
 import { Storage } from "@google-cloud/storage"
 import fs from "fs"
+import path from "path"
 import { getTimberLatestVersion, getTimberVersions } from "./utils"
 import { ApiTimberLatestData } from "./types"
 import { CHROMATECH_GCS_BUCKET_NAME } from "./const"
+import { getTempDirectory } from "../project"
 
 // FIRMWARE
 // This script installs the latest firmware versions from GCS
@@ -17,10 +19,12 @@ const bucket = storage.bucket(CHROMATECH_GCS_BUCKET_NAME)
 const bucketBuildsPath = "timber/builds"
 
 // Local path to download files
-const firmwarePath = "temp/firmware"
+const getFirmwarePath = () => path.join(getTempDirectory(), "firmware")
 
 // Download files
 export const downloadFirmware = async (version?: string) => {
+  const firmwarePath = getFirmwarePath()
+  
   // Create local path
   await fs.mkdirSync(firmwarePath, { recursive: true })
 
@@ -34,8 +38,8 @@ export const downloadFirmware = async (version?: string) => {
   // Save versions to json file
   // Add version limit to attempt to reduce build size
   const versions = await getTimberVersions()
-  fs.writeFileSync(`${firmwarePath}/versions.json`, JSON.stringify(versions))
-  console.info(`Versions saved to ${firmwarePath}/versions.json`)
+  fs.writeFileSync(path.join(firmwarePath, "versions.json"), JSON.stringify(versions))
+  console.info(`Versions saved to ${path.join(firmwarePath, "versions.json")}`)
 
   // Validate version
   version = version?.startsWith("v") ? version : `v${version}`
@@ -59,9 +63,9 @@ export const downloadFirmware = async (version?: string) => {
       }
 
       if (Object.values(versions).includes(buildPath)) {
-        const localFileDirPath = `${firmwarePath}/builds/${fileDirPath}`
+        const localFileDirPath = path.join(firmwarePath, "builds", fileDirPath)
         await fs.mkdirSync(localFileDirPath, { recursive: true })
-        const dest = `${firmwarePath}/builds/${fullFilePath}`
+        const dest = path.join(firmwarePath, "builds", fullFilePath)
         if (!fs.existsSync(dest)) {
           await file.download({
             destination: dest,

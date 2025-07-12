@@ -4,13 +4,15 @@ import {
   findModelName,
   readFileSafe,
 } from "../utils"
-import { loadProjectConfig } from "../project"
+import { loadProjectConfig, getTempDirectory } from "../project"
 import JSON5 from "json5"
 import fs from "node:fs"
 import path from "path"
 
 export const createIpsCommand = () => {
-  return new Command("ips [project]")
+  const command = new Command("ips")
+  command
+    .argument("[project]", "optional project name")
     .description(
       "Output controller IP list for fixtures derived from a model file."
     )
@@ -34,7 +36,7 @@ export const createIpsCommand = () => {
         modelPath = options.model || projectConfig.modelPath
         fixturesPath = options.fixtures || projectConfig.fixturesPath
         name = options.name || project
-        outputDir = options.output || `./temp/${project}`
+        outputDir = options.output || path.join(getTempDirectory(), project)
 
         if (!modelPath) {
           console.error(`Project '${project}' does not have a model path configured`)
@@ -61,6 +63,8 @@ export const createIpsCommand = () => {
 
       process.exit(1)
     })
+  
+  return command
 }
 
 export const parseModelIPs = (
