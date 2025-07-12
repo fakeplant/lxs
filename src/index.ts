@@ -9,6 +9,7 @@ import { createNetworkCommand } from "./programs/network"
 import { createFirmwareCommand } from "./programs/firmware"
 import { createUpdateCommand } from "./programs/update"
 import { createRecoverCommand } from "./programs/recover"
+import { createFlashCommand } from "./programs/flash"
 
 // Env
 import dotenv from "dotenv"
@@ -30,6 +31,7 @@ program.addCommand(createNetworkCommand())
 program.addCommand(createFirmwareCommand())
 program.addCommand(createUpdateCommand())
 program.addCommand(createRecoverCommand())
+program.addCommand(createFlashCommand())
 
 // Run program
 program.parse(process.argv)

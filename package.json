@@ -17,12 +17,15 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@google-cloud/storage": "^7.12.1",
+    "await-timeout": "^1.1.1",
+    "chalk": "^5.4.1",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "golden-fleece": "^1.0.9",
     "json5": "^2.2.3",
     "mdns": "github:fakeplant/node_mdns",
     "semver": "^7.6.3",
+    "serialport": "^13.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
