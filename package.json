@@ -11,20 +11,22 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "tendril": "./dist/index.mjs"
+    "lxs": "./dist/index.mjs"
   },
   "author": "",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "dependencies": {
     "@google-cloud/storage": "^7.12.1",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "golden-fleece": "^1.0.9",
     "json5": "^2.2.3",
+    "mdns": "github:fakeplant/node_mdns",
     "semver": "^7.6.3",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/mdns": "^0.0.38",
     "@types/node": "^22.1.0",
     "@types/semver": "^7.5.8",
     "@types/ws": "^8.5.12",
