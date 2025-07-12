@@ -15,6 +15,14 @@ export const createSyncCommand = () => {
   command
     .argument("[project]", "optional project name")
     .description("Sync fixture with model.")
+    .addHelpText('after', `
+Examples:
+  lxs sync mothership                           # sync using project config
+  lxs sync --model ~/show.lxm --fixtures ~/f   # sync using explicit paths
+
+This command synchronizes parameter values from a model file back to the 
+original fixture files. Only parameters that have changed are updated,
+preserving the original fixture file formatting.`)
     .option("-m, --model <path>", "path to the model file")
     .option("-f, --fixtures <path>", "path to the fixtures directory")
     .action((project, options) => {

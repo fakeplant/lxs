@@ -1,18 +1,35 @@
 # LXS (LX Sync)
-Used to to sync [Chromatik](https://chromatik.co/) model file (.lxm) parameter changes back to original fixture files (.lxf).
-Also includes a bunch of helper functions for managing [Chroma.tech](https://chroma.tech) controllers with Chromatik projects.
 
+A command-line tool for managing LED controller devices. Provides functionality for firmware updates, configuration management, and device recovery across multiple deployment scenarios.
 
-## TE Usage
+## Features
 
-### Update Existing Controllers
+- 🔄 **Fixture Synchronization** - Sync model parameter changes back to fixture files
+- 📱 **Wireless Updates** - Update controller firmware and configuration over network
+- 🔌 **Serial Flashing** - Flash controllers via USB/serial connection
+- 🌐 **Network Management** - Configure IP addresses, hostnames, and network settings
+- 🚑 **Device Recovery** - Recover controllers after failed updates
+- 📦 **Project Management** - Organize configurations by project
 
-1. Download the firmware versions we want to run
-`lxs firmware -v 0.12.10`
+## Quick Start
 
-2. 
+```bash
+# Install dependencies and build
+npm install && npm run build && npm link
 
+# Download firmware
+lxs firmware --version 0.12.10
 
+# Generate IP list for project
+lxs ips mothership
+
+# Update all controllers
+lxs update mothership --version 0.12.10
+```
+
+## Documentation
+
+📖 **[Complete Documentation](docs.md)** - Detailed command reference, workflows, and examples
 
 ## Install
 

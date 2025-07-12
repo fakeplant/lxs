@@ -17,6 +17,17 @@ export const createRecoverCommand = () => {
     .description(
       "Recover controller network settings after breaking firmware updates."
     )
+    .addHelpText('after', `
+Examples:
+  lxs recover                                   # scan and recover all devices
+  lxs recover mothership                        # same as above
+
+This command scans the network for controllers using mDNS discovery 
+and restores network settings from backup files. Useful when controllers
+lose network connectivity after failed firmware updates.
+
+It looks for '_chromatech-config._tcp' services and automatically
+processes all discovered devices.`)
     .action(async (project, options) => {
       await recoverControllersNetwork()
 

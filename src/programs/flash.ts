@@ -21,6 +21,18 @@ export const createFlashCommand = () => {
     .argument("<ip>", "IP address to configure")
     .option("-v, --version <0.0.0>", "firmware version to flash")
     .description("Flash controller with firmware, network, and config over serial.")
+    .addHelpText('after', `
+Examples:
+  lxs flash mothership 10.7.100.50             # use project firmware version
+  lxs flash mothership 10.7.100.50 --version 0.12.10 # override version
+
+This command flashes controllers via serial connection (USB) in three steps:
+1. Firmware update - Flashes firmware using OTA protocol over serial
+2. Network configuration - Sets IP, hostname, and network settings  
+3. Controller configuration - Applies all config sections (LEDs, power, etc.)
+
+Supported devices: ESP32-S3, ESP32-C3, CH340 (detected automatically)
+Waits for device connection, flashes, then waits for disconnection.`)
     .action(async (project, ip, options) => {
       // Validate IP format
       if (!ip.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {

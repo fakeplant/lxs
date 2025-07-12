@@ -16,6 +16,14 @@ export const createIpsCommand = () => {
     .description(
       "Output controller IP list for fixtures derived from a model file."
     )
+    .addHelpText('after', `
+Examples:
+  lxs ips mothership                            # generate IPs for project
+  lxs ips mothership --output ./custom          # custom output directory  
+  lxs ips --model ~/show.lxm --fixtures ~/f     # explicit paths
+
+This command recursively parses model and fixture files to extract
+controller IP addresses and saves them to temp/<project>/ips.json.`)
     .option("-m, --model <path>", "path to the model file")
     .option("-f, --fixtures <path>", "path to the fixtures directory")
     .option("-n, --name <name>", "name of the output file")

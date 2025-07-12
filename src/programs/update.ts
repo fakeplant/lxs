@@ -19,6 +19,16 @@ export const createUpdateCommand = () => {
   command
     .argument("[project]", "optional project name")
     .description("Update controller firmware.")
+    .addHelpText('after', `
+Examples:
+  lxs update mothership --version 0.12.10      # interactive IP selection
+  lxs update --ips ./ips.json --version 0.12.10 # manual mode
+
+This command performs Over-The-Air (OTA) firmware updates over network.
+It backs up network settings before updating, shows progress during upload,
+automatically detects device chip type, and resets devices after successful update.
+
+Requires firmware to be downloaded first with 'lxs firmware --version X.X.X'`)
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-v, --version <0.0.0>", "firmware version to update to")
     .action(async (project, options) => {

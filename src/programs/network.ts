@@ -16,6 +16,16 @@ export const createNetworkCommand = () => {
   command
     .argument("[project]", "optional project name")
     .description("Validate controllers are up-to-date with.")
+    .addHelpText('after', `
+Examples:
+  lxs network mothership                        # interactive IP selection
+  lxs network --ips ./ips.json --config ./n.json # manual mode
+
+This command updates network settings (IP, subnet, gateway, hostname).
+It handles connection interruption during network changes and automatically
+reconnects to verify the changes were applied successfully.
+
+Template variables like $ip, $hostname are replaced with actual values.`)
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-c, --config <path>", "path to the config file")
     .action(async (project, options) => {

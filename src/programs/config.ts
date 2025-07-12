@@ -16,6 +16,19 @@ export const createConfigCommand = () => {
   command
     .argument("[project]", "optional project name")
     .description("Validate controllers are up-to-date with.")
+    .addHelpText('after', `
+Examples:
+  lxs config mothership                         # interactive IP selection
+  lxs config mothership --key leds              # update only LED config
+  lxs config --ips ./ips.json --config ./c.json # manual mode
+
+When using project mode, you'll be prompted to select:
+  a) All IPs - update all controllers
+  s) Single IP - select from numbered list
+  c) Custom IP - enter any IP address
+
+This command compares current controller config with desired config
+and updates only the sections that have changed.`)
     .option("-i, --ips <path>", "path to the ips json file")
     .option("-c, --config <path>", "path to the config file")
     .option("-k, --key <key>", "only validate config for single key")

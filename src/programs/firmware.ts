@@ -10,6 +10,14 @@ export const createFirmwareCommand = () => {
     .argument("[project]", "optional project name")
     .option("-v, --version <0.0.0>", "download a single version")
     .description("Download controller firmware versions to computer.")
+    .addHelpText('after', `
+Examples:
+  lxs firmware --version 0.12.10               # download specific version
+  lxs firmware mothership --version 0.12.10    # same as above
+
+This command downloads firmware from Google Cloud Storage and saves it
+to temp/firmware/builds/. The firmware must be downloaded before using
+the 'update' or 'flash' commands.`)
     .action(async (project, options) => {
       let version: string
 
