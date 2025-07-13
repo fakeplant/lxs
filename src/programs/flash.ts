@@ -20,8 +20,12 @@ export const createFlashCommand = () => {
     .argument("<project>", "project name")
     .argument("<ip>", "IP address to configure")
     .option("-v, --version <0.0.0>", "firmware version to flash")
-    .description("Flash controller with firmware, network, and config over serial.")
-    .addHelpText('after', `
+    .description(
+      "Flash controller with firmware, network, and config over serial."
+    )
+    .addHelpText(
+      "after",
+      `
 Examples:
   lxs flash mothership 10.7.100.50             # use project firmware version
   lxs flash mothership 10.7.100.50 --version 0.12.10 # override version
@@ -32,7 +36,8 @@ This command flashes controllers via serial connection (USB) in three steps:
 3. Controller configuration - Applies all config sections (LEDs, power, etc.)
 
 Supported devices: ESP32-S3, ESP32-C3, CH340 (detected automatically)
-Waits for device connection, flashes, then waits for disconnection.`)
+Waits for device connection, flashes, then waits for disconnection.`
+    )
     .action(async (project, ip, options) => {
       // Validate IP format
       if (!ip.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
@@ -56,24 +61,36 @@ Waits for device connection, flashes, then waits for disconnection.`)
             version = firmwareConfig.version
             console.log(`Using firmware version ${version} from project config`)
           } catch (error) {
-            console.warn(`Warning: Could not parse firmware.json for project ${project}`)
+            console.warn(
+              `Warning: Could not parse firmware.json for project ${project}`
+            )
           }
         }
       }
 
       if (!version) {
-        console.error("No firmware version specified. Use --version or configure in project firmware.json")
+        console.error(
+          "No firmware version specified. Use --version or configure in project firmware.json"
+        )
         process.exit(1)
       }
 
       // Get config files
-      if (!projectConfig.configPath || !fs.existsSync(projectConfig.configPath)) {
+      if (
+        !projectConfig.configPath ||
+        !fs.existsSync(projectConfig.configPath)
+      ) {
         console.error(`Project '${project}' does not have a config file`)
         process.exit(1)
       }
 
-      if (!projectConfig.networkPath || !fs.existsSync(projectConfig.networkPath)) {
-        console.error(`Project '${project}' does not have a network config file`)
+      if (
+        !projectConfig.networkPath ||
+        !fs.existsSync(projectConfig.networkPath)
+      ) {
+        console.error(
+          `Project '${project}' does not have a network config file`
+        )
         process.exit(1)
       }
 
@@ -82,11 +99,16 @@ Waits for device connection, flashes, then waits for disconnection.`)
       console.log(chalk.yellow(`IP: ${ip}`))
       console.log(chalk.yellow(`Firmware: ${version}`))
 
-      await flashController(ip, version, projectConfig.configPath, projectConfig.networkPath)
+      await flashController(
+        ip,
+        version,
+        projectConfig.configPath,
+        projectConfig.networkPath
+      )
 
       console.log(chalk.green("Flash process completed!"))
     })
-  
+
   return command
 }
 
@@ -107,9 +129,10 @@ const flashController = async (
 
     // Step 1: Firmware Update
     console.log(chalk.cyan("Step 1: Updating firmware..."))
-    await flashFirmware(serialClient, ip, version)
+    // await flashFirmware(serialClient, ip, version)
+    console.log("SKIPPING FIRMWARE: DO OVER WS")
 
-    // Step 2: Network Configuration  
+    // Step 2: Network Configuration
     console.log(chalk.cyan("Step 2: Configuring network..."))
     await flashNetwork(serialClient, ip, networkPath)
 
@@ -122,23 +145,35 @@ const flashController = async (
 
     // Wait for disconnection
     await serialClient.waitForDisconnection()
-
   } catch (error) {
-    console.error(chalk.red("Flash failed:"), error instanceof Error ? error.message : error)
+    console.error(
+      chalk.red("Flash failed:"),
+      error instanceof Error ? error.message : error
+    )
     process.exit(1)
   } finally {
     await serialClient.disconnect()
   }
 }
 
-const flashFirmware = async (serialClient: SerialClient, ip: string, version: string) => {
+const flashFirmware = async (
+  serialClient: SerialClient,
+  ip: string,
+  version: string
+) => {
   // Version cleanup
   version = version.startsWith("v") ? version : `v${version}`
 
   // Check firmware files
-  const versionsPath = path.join(getTempDirectory(), "firmware", "versions.json")
+  const versionsPath = path.join(
+    getTempDirectory(),
+    "firmware",
+    "versions.json"
+  )
   if (!fs.existsSync(versionsPath)) {
-    throw new Error("Firmware versions not found. Run 'lxs firmware --version <version>' first.")
+    throw new Error(
+      "Firmware versions not found. Run 'lxs firmware --version <version>' first."
+    )
   }
 
   const versionsFile = fs.readFileSync(versionsPath, "utf8")
@@ -166,7 +201,7 @@ const flashFirmware = async (serialClient: SerialClient, ip: string, version: st
   const infoMessage = formatCanopyMessage("get", "info", {})
   const infoResp = await serialClient.sendCommand(JSON.stringify(infoMessage))
   const parsedInfoResp = parseCanopyMessage(JSON.parse(infoResp))
-  
+
   if (!parsedInfoResp.success) {
     throw new Error("Failed to get device info")
   }
@@ -177,11 +212,13 @@ const flashFirmware = async (serialClient: SerialClient, ip: string, version: st
     return
   }
 
-  console.log(`Current version: ${parsedInfoResp?.data?.version}, updating to: ${version}`)
+  console.log(
+    `Current version: ${parsedInfoResp?.data?.version}, updating to: ${version}`
+  )
 
   const chip = getDeviceChip(parsedInfoResp.data)
   const otaPath = getOtaPath(otaManifest, chip)
-  
+
   // Get firmware file
   let firmwareFile
   try {
@@ -194,7 +231,7 @@ const flashFirmware = async (serialClient: SerialClient, ip: string, version: st
   const startReq = formatCanopyMessage("ota", "", { size: firmwareFile.length })
   const startResp = await serialClient.sendCommand(JSON.stringify(startReq))
   const startRespJson = JSON.parse(startResp)
-  
+
   if (!startRespJson.result) {
     throw new Error(`Firmware update failed to start: ${startRespJson.error}`)
   }
@@ -213,28 +250,32 @@ const flashFirmware = async (serialClient: SerialClient, ip: string, version: st
         ? 1
         : sentJson.ota.progress /
           (sentJson.ota.remaining + sentJson.ota.progress)
-    
+
     process.stdout.write(`\rProgress: ${Math.round(progress * 100)}%`)
-    
+
     if (sentJson.ota.remaining === 0) {
       break
     }
   }
-  
+
   console.log("\nFirmware update completed, device will restart...")
-  
+
   // Wait a bit for device to restart
-  await new Promise(resolve => setTimeout(resolve, 3000))
+  await new Promise((resolve) => setTimeout(resolve, 3000))
 }
 
-const flashNetwork = async (serialClient: SerialClient, ip: string, networkPath: string) => {
+const flashNetwork = async (
+  serialClient: SerialClient,
+  ip: string,
+  networkPath: string
+) => {
   const networkData = readFileSafe(networkPath)
   if (!networkData) {
     throw new Error("Could not read network config file")
   }
-  
+
   const networkConfig = JSON5.parse(networkData)
-  
+
   // Set params for name / host
   const params = {
     name: ip,
@@ -244,35 +285,41 @@ const flashNetwork = async (serialClient: SerialClient, ip: string, networkPath:
 
   // Update network config with IP-specific values
   let configToSend = JSON.parse(JSON.stringify(networkConfig.network))
-  
+
   // Replace template variables
   const configStr = JSON.stringify(configToSend)
   const updatedConfigStr = configStr
     .replace(/\$name/g, params.name)
     .replace(/\$hostname/g, params.hostname)
     .replace(/\$ip/g, params.ip)
-  
+
   configToSend = JSON.parse(updatedConfigStr)
 
   const networkMessage = formatCanopyMessage("set", "network", configToSend)
-  const response = await serialClient.sendCommand(JSON.stringify(networkMessage))
+  const response = await serialClient.sendCommand(
+    JSON.stringify(networkMessage)
+  )
   const parsedResponse = parseCanopyMessage(JSON.parse(response))
-  
+
   if (!parsedResponse.success) {
     throw new Error(`Network config failed: ${parsedResponse.error}`)
   }
-  
+
   console.log("Network configuration applied successfully")
 }
 
-const flashConfig = async (serialClient: SerialClient, ip: string, configPath: string) => {
+const flashConfig = async (
+  serialClient: SerialClient,
+  ip: string,
+  configPath: string
+) => {
   const configData = readFileSafe(configPath)
   if (!configData) {
     throw new Error("Could not read config file")
   }
-  
+
   const config = JSON5.parse(configData)
-  
+
   // Set params for name / host
   const params = {
     name: ip,
@@ -282,33 +329,37 @@ const flashConfig = async (serialClient: SerialClient, ip: string, configPath: s
 
   // Apply each config section
   for (const key in config) {
-    if (key === 'globals') {
+    if (key === "globals") {
       // Handle globals specially to set name
       let globalsConfig = { ...config[key] }
       globalsConfig.name = params.name
-      
+
       const message = formatCanopyMessage("set", key, globalsConfig)
       const response = await serialClient.sendCommand(JSON.stringify(message))
       const parsedResponse = parseCanopyMessage(JSON.parse(response))
-      
+
       if (!parsedResponse.success) {
-        throw new Error(`Config update failed for ${key}: ${parsedResponse.error}`)
+        throw new Error(
+          `Config update failed for ${key}: ${parsedResponse.error}`
+        )
       }
-      
+
       console.log(`Applied config: ${key}`)
     } else {
       // Apply other config sections as-is
       const message = formatCanopyMessage("set", key, config[key])
       const response = await serialClient.sendCommand(JSON.stringify(message))
       const parsedResponse = parseCanopyMessage(JSON.parse(response))
-      
+
       if (!parsedResponse.success) {
-        throw new Error(`Config update failed for ${key}: ${parsedResponse.error}`)
+        throw new Error(
+          `Config update failed for ${key}: ${parsedResponse.error}`
+        )
       }
-      
+
       console.log(`Applied config: ${key}`)
     }
   }
-  
+
   console.log("Controller configuration applied successfully")
 }

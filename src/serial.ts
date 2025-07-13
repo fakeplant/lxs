@@ -1,5 +1,6 @@
 import { SerialPort, ReadlineParser } from "serialport"
 import Timeout from "await-timeout"
+import chalk from "chalk"
 
 export interface SerialDevice {
   path: string
@@ -14,13 +15,13 @@ export class SerialClient {
   static async getAvailablePorts(): Promise<SerialDevice[]> {
     const ports = await SerialPort.list()
     const serialFilters = [
-      ['303a', '1001'], // ESP32-S3
-      ['1a86', '7523'], // CH340
-      ['303a', '814e'], // ESP32-C3
-      ['303a', '814f'], // ESP32-C3
+      ["303a", "1001"], // ESP32-S3
+      ["1a86", "7523"], // CH340
+      ["303a", "814e"], // ESP32-C3
+      ["303a", "814f"], // ESP32-C3
     ]
 
-    return ports.filter(port => {
+    return ports.filter((port) => {
       const vid = port.vendorId
       const pid = port.productId
       if (!vid || !pid) return false
@@ -33,25 +34,31 @@ export class SerialClient {
     let ports = await SerialClient.getAvailablePorts()
 
     if (ports.length > 1) {
-      throw new Error('Only one device supported at a time. Please disconnect extra devices.')
+      throw new Error(
+        "Only one device supported at a time. Please disconnect extra devices."
+      )
     }
 
-    console.log('Waiting for device to be connected...')
+    console.log("Waiting for device to be connected...")
     while (ports.length !== 1) {
       await Timeout.set(100)
       ports = await SerialClient.getAvailablePorts()
     }
 
-    console.log('Device detected!')
+    console.log("Device detected!")
     return ports[0]
   }
 
   async connect(device: SerialDevice): Promise<void> {
-    this.port = new SerialPort({ 
-      path: device.path, 
-      baudRate: 115200 
+    this.port = new SerialPort({
+      path: device.path,
+      baudRate: 115200,
     })
     this.parser = this.port.pipe(new ReadlineParser())
+
+    // Wait 1 second after connecting for device to stabilize
+    console.log(chalk.blue("Waiting for device to stabilize..."))
+    await Timeout.set(5000)
   }
 
   async disconnect(): Promise<void> {
@@ -65,77 +72,147 @@ export class SerialClient {
     }
   }
 
-  async sendCommand(command: string, timeoutMs: number = 10000): Promise<string> {
+  async sendCommand(
+    command: string,
+    timeoutMs: number = 10000
+  ): Promise<string> {
     if (!this.port || !this.parser) {
-      throw new Error('Serial port not connected')
+      throw new Error("Serial port not connected")
     }
 
+    // Parse command to get the _rid for validation
     const commandObj = JSON.parse(command)
     const rid = commandObj._rid
 
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.parser!.removeAllListeners('data')
-        reject(new Error(`Command timeout after ${timeoutMs}ms`))
-      }, timeoutMs)
+    console.log(chalk.gray(`[SERIAL TX] ${command}`))
 
-      this.parser!.on('data', (data: string) => {
+    return new Promise<string>((resolve, reject) => {
+      let timeout: NodeJS.Timeout
+      let resolved = false
+
+      const dataHandler = (response: string) => {
+        const trimmed = response.trim()
+        if (!trimmed) return
+
         try {
-          const response = JSON.parse(data.trim())
-          if (response._rid === rid) {
+          const responseObj = JSON.parse(trimmed)
+          console.log(chalk.gray(`[SERIAL RX] ${trimmed}`))
+
+          // Check if this is the response we're waiting for
+          if (rid && responseObj._rid !== rid) {
+            console.warn(
+              chalk.yellow(
+                `[SERIAL] Received response with mismatched _rid: expected ${rid}, got ${responseObj._rid}`
+              )
+            )
+            return // Don't resolve, keep waiting for the right response
+          }
+
+          if (!resolved) {
+            resolved = true
             clearTimeout(timeout)
-            this.parser!.removeAllListeners('data')
-            resolve(data.trim())
+            this.parser!.removeListener("data", dataHandler)
+            resolve(trimmed)
           }
         } catch (error) {
-          if (data.trim() !== '') {
-            console.warn(`[unparseable response] ${data.trim()}`)
+          if (trimmed !== "") {
+            console.warn(chalk.red(`[unparseable response] ${trimmed}`))
           }
         }
-      })
+      }
 
-      this.port!.write(command + '\n')
+      // Set up listener FIRST
+      this.parser!.on("data", dataHandler)
+
+      // Set timeout AFTER listener is attached (using the actual timeout parameter)
+      timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true
+          this.parser!.removeListener("data", dataHandler)
+          reject(new Error(`Command timeout after ${timeoutMs}ms`))
+        }
+      }, timeoutMs)
+
+      // NOW send the data - ensure we're sending with a newline
+      this.port.write(command + "\n", (err) => {
+        if (err) {
+          resolved = true
+          clearTimeout(timeout)
+          this.parser!.removeListener("data", dataHandler)
+          reject(err)
+        }
+      })
     })
   }
 
   async sendBinary(data: number[]): Promise<string> {
     if (!this.port || !this.parser) {
-      throw new Error('Serial port not connected')
+      throw new Error("Serial port not connected")
     }
 
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.parser!.removeAllListeners('data')
-        reject(new Error('Binary command timeout'))
-      }, 30000)
+    console.log(chalk.gray(`[SERIAL TX] Binary data (${data.length} bytes)`))
 
-      this.parser!.on('data', (response: string) => {
+    return new Promise<string>((resolve, reject) => {
+      let timeout: NodeJS.Timeout
+      let resolved = false
+
+      const dataHandler = (response: string) => {
+        const trimmed = response.trim()
+        if (!trimmed) return
+
         try {
-          const responseObj = JSON.parse(response.trim())
-          clearTimeout(timeout)
-          this.parser!.removeAllListeners('data')
-          resolve(response.trim())
+          const responseObj = JSON.parse(trimmed)
+          console.log(chalk.gray(`[SERIAL RX] ${trimmed}`))
+
+          // For OTA responses, we don't check _rid since they don't include it
+          // Just accept the first valid JSON response
+          if (!resolved) {
+            resolved = true
+            clearTimeout(timeout)
+            this.parser!.removeListener("data", dataHandler)
+            resolve(trimmed)
+          }
         } catch (error) {
-          if (response.trim() !== '') {
-            console.warn(`[unparseable response] ${response.trim()}`)
+          if (trimmed !== "") {
+            console.warn(chalk.red(`[unparseable response] ${trimmed}`))
           }
         }
-      })
+      }
 
+      // Set up listener FIRST
+      this.parser!.on("data", dataHandler)
+
+      // Set timeout AFTER listener is attached
+      timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true
+          this.parser!.removeListener("data", dataHandler)
+          reject(new Error("Binary command timeout after 30s"))
+        }
+      }, 30000)
+
+      // NOW send the data
       const buffer = Buffer.from(data)
-      this.port!.write(buffer)
+      this.port.write(buffer, (err) => {
+        if (err) {
+          resolved = true
+          clearTimeout(timeout)
+          this.parser!.removeListener("data", dataHandler)
+          reject(err)
+        }
+      })
     })
   }
 
   async waitForDisconnection(): Promise<void> {
-    console.log('Waiting for device to be disconnected...')
+    console.log("Waiting for device to be disconnected...")
     let ports = await SerialClient.getAvailablePorts()
-    
+
     while (ports.length >= 1) {
       await Timeout.set(100)
       ports = await SerialClient.getAvailablePorts()
     }
-    
-    console.log('Device disconnected!')
+
+    console.log("Device disconnected!")
   }
 }
